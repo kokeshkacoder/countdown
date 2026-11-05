@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>💖 Seeing my Bebe</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#efe8ff;--card:#ffffff;--ink:#3b2a5c;--soft:#8a7aa8;--pink:#ff7aa8;--mint:#b6efd6;--sun:#ffe08a;--tile:#f6f1ff;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241a3a;--card:#33264f;--ink:#f5eeff;--soft:#b9a9d8;--tile:#3f3060;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#241a3a;--card:#33264f;--ink:#f5eeff;--soft:#b9a9d8;--tile:#3f3060;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Fredoka','Trebuchet MS',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px;overflow-x:hidden}
+.wrap{width:100%;max-width:440px;text-align:center}
+.emoji{font-size:84px;line-height:1;display:inline-block;animation:bob 2.4s ease-in-out infinite;cursor:pointer;user-select:none}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(4deg)}}
+h1{font-size:30px;font-weight:600;margin:14px 0 4px}
+.sub{color:var(--soft);margin:0 0 22px;font-size:17px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tile{background:var(--card);border-radius:26px;padding:16px 4px 12px;box-shadow:0 6px 0 var(--pink)}
+.tile:nth-child(2){box-shadow:0 6px 0 var(--sun)}
+.tile:nth-child(3){box-shadow:0 6px 0 var(--mint)}
+.tile:nth-child(4){box-shadow:0 6px 0 #c9b6ff}
+.num{font-size:38px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.lbl{font-size:14px;color:var(--soft);margin-top:6px}
+.bar{height:16px;background:var(--card);border-radius:99px;margin:28px 0 8px;overflow:hidden}
+.fill{height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--sun));border-radius:99px;transition:width .8s}
+.pct{color:var(--soft);font-size:15px;margin:0}
+button,input{font:inherit;color:var(--ink)}
+.edit{margin-top:26px;background:var(--card);border-radius:26px;padding:16px;display:none;text-align:left;gap:10px;flex-direction:column}
+.edit.open{display:flex}
+.edit label{font-size:14px;color:var(--soft)}
+.edit input{width:100%;background:var(--tile);border:2px solid transparent;border-radius:16px;padding:12px 14px;font-size:17px}
+.edit input:focus{outline:none;border-color:var(--pink)}
+.row{display:flex;gap:10px}
+.row>div{flex:1}
+.row>div:first-child{flex:0 0 84px}
+.btn{background:var(--pink);color:#fff;border:0;border-radius:99px;padding:12px 22px;font-size:17px;font-weight:500;cursor:pointer;box-shadow:0 4px 0 #d9507e}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #d9507e}
+.link{background:none;border:0;color:var(--soft);font-size:16px;margin-top:22px;cursor:pointer;text-decoration:underline;text-underline-offset:4px}
+.link:focus-visible,.btn:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
+.conf{position:fixed;top:-20px;font-size:26px;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg);opacity:.8}}
+@media (prefers-reduced-motion:reduce){.emoji{animation:none}.conf{display:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="emoji" id="emoji" role="button" tabindex="0" aria-label="Pop confetti">💖</div>
+  <h1 id="title">Seeing my Bebe</h1>
+  <p class="sub" id="sub"></p>
+  <div class="grid" aria-live="off">
+    <div class="tile"><div class="num" id="d">0</div><div class="lbl">days</div></div>
+    <div class="tile"><div class="num" id="h">0</div><div class="lbl">hours</div></div>
+    <div class="tile"><div class="num" id="m">0</div><div class="lbl">mins</div></div>
+    <div class="tile"><div class="num" id="s">0</div><div class="lbl">secs</div></div>
+  </div>
+  <div class="bar"><div class="fill" id="fill"></div></div>
+  <p class="pct" id="pct"></p>
+  <button class="link" id="toggle">Change event</button>
+  <div class="edit" id="edit">
+    <div class="row">
+      <div><label for="in-emoji">Emoji</label><input id="in-emoji" maxlength="4"></div>
+      <div><label for="in-title">Event name</label><input id="in-title" maxlength="40"></div>
+    </div>
+    <div><label for="in-date">Date and time</label><input id="in-date" type="datetime-local"></div>
+    <button class="btn" id="save">Save</button>
+  </div>
+</main>
+<script>
+(function(){
+  var KEY='cute-countdown-v2';
+  var $=function(i){return document.getElementById(i)};
+  function pad(n){return String(n).padStart(2,'0')}
+  function localStr(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes())}
+  var def=new Date(2026,10,6,1,20,0,0);
+  var state={emoji:'💖',title:'Seeing my Bebe',date:localStr(def),start:new Date(2026,10,5,0,0,0,0).getTime()};
+  try{var s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.date)state=s}catch(e){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+  var done=false;
+  function confetti(){
+    var set=['🎉','✨','💖','⭐','🎈'];
+    for(var i=0;i<28;i++){
+      var c=document.createElement('div');c.className='conf';
+      c.textContent=set[i%set.length];
+      c.style.left=Math.random()*100+'vw';
+      c.style.animationDuration=(2+Math.random()*2.5)+'s';
+      c.style.animationDelay=(Math.random()*0.6)+'s';
+      document.body.appendChild(c);
+      (function(el){setTimeout(function(){el.remove()},5500)})(c);
+    }
+  }
+  function render(){
+    $('emoji').textContent=state.emoji;
+    $('title').textContent=state.title;
+    var target=new Date(state.date).getTime();
+    var diff=target-Date.now();
+    var fmt=new Date(target).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+    if(isNaN(target)){$('sub').textContent='Pick a date below';return}
+    if(diff<=0){
+      $('sub').textContent="It's here! Have the best time 🎉";
+      ['d','h','m','s'].forEach(function(k){$(k).textContent='0'});
+      $('fill').style.width='100%';$('pct').textContent='Countdown complete';
+      if(!done){done=true;confetti()}
+      return;
+    }
+    done=false;
+    $('sub').textContent=fmt;
+    var t=Math.floor(diff/1000);
+    $('d').textContent=Math.floor(t/86400);
+    $('h').textContent=pad(Math.floor(t%86400/3600));
+    $('m').textContent=pad(Math.floor(t%3600/60));
+    $('s').textContent=pad(t%60);
+    var total=target-(state.start||Date.now());
+    var p=total>0?Math.min(100,Math.max(0,(1-diff/total)*100)):0;
+    $('fill').style.width=p+'%';
+    $('pct').textContent=Math.round(p)+'% of the wait is done';
+  }
+  $('toggle').onclick=function(){
+    var e=$('edit');e.classList.toggle('open');
+    $('toggle').textContent=e.classList.contains('open')?'Close':'Change event';
+    $('in-emoji').value=state.emoji;$('in-title').value=state.title;$('in-date').value=state.date;
+  };
+  $('save').onclick=function(){
+    var d=$('in-date').value;if(!d)return;
+    state={emoji:$('in-emoji').value||'🎉',title:$('in-title').value||'My event',date:d,start:Date.now()};
+    save();$('edit').classList.remove('open');$('toggle').textContent='Change event';done=false;render();
+  };
+  $('emoji').onclick=confetti;
+  $('emoji').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();confetti()}};
+  render();setInterval(render,1000);
+})();
+</script>
+</body>
+</html>
